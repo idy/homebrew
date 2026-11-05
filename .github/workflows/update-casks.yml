@@ -1,0 +1,63 @@
+name: Update casks
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: update-casks
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_ANALYTICS: 1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Read latest stable releases
+        id: update
+        run: |
+          python3 -m unittest discover -s tests -v
+          python3 scripts/update_casks.py
+          if git diff --quiet -- Casks; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Link this checkout as the tap
+        if: steps.update.outputs.changed == 'true'
+        run: |
+          tap_dir="$(brew --repository)/Library/Taps/idy/homebrew-homebrew"
+          mkdir -p "$(dirname "$tap_dir")"
+          ln -s "$GITHUB_WORKSPACE" "$tap_dir"
+          if brew command trust >/dev/null 2>&1; then
+            brew trust idy/homebrew
+          fi
+
+      - name: Validate updated casks and every download
+        if: steps.update.outputs.changed == 'true'
+        run: |
+          brew style --cask idy/homebrew/tailsplit idy/homebrew/nootify
+          brew audit --cask --strict idy/homebrew/tailsplit idy/homebrew/nootify
+          brew fetch --cask --retry --arch=arm idy/homebrew/tailsplit idy/homebrew/nootify
+          brew fetch --cask --retry --arch=intel idy/homebrew/tailsplit
+
+      - name: Publish verified cask updates
+        if: steps.update.outputs.changed == 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add Casks
+          git commit -m "Update casks to latest stable releases"
+          git push origin HEAD:main

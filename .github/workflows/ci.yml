@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_ANALYTICS: 1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Test release validation
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Link this checkout as the tap
+        run: |
+          tap_dir="$(brew --repository)/Library/Taps/idy/homebrew-homebrew"
+          mkdir -p "$(dirname "$tap_dir")"
+          ln -s "$GITHUB_WORKSPACE" "$tap_dir"
+          if brew command trust >/dev/null 2>&1; then
+            brew trust idy/homebrew
+          fi
+
+      - name: Check cask style and metadata
+        run: |
+          brew style --cask idy/homebrew/tailsplit idy/homebrew/nootify
+          brew audit --cask --strict idy/homebrew/tailsplit idy/homebrew/nootify
+
+      - name: Verify Apple Silicon downloads
+        run: brew fetch --cask --retry --arch=arm idy/homebrew/tailsplit idy/homebrew/nootify
+
+      - name: Verify Intel download
+        run: brew fetch --cask --retry --arch=intel idy/homebrew/tailsplit
