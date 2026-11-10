@@ -1,6 +1,6 @@
 cask "nootify" do
-  version "0.2.0"
-  sha256 "d3aa70ce316e7e8ca0a4fccb8818347dd55bcbf08d02f5dd496d2bee3d5d3230"
+  version "0.2.1"
+  sha256 "aa381a79c2fe24783ffd88dfac0810d8f8f195b32669aa0f8a78cfc41d915f70"
 
   url "https://github.com/idy/nootify/releases/download/v#{version}/Nootify_#{version}_aarch64.dmg"
   name "Nootify"
