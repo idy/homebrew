@@ -1,9 +1,9 @@
 cask "tailsplit" do
   arch arm: "arm64", intel: "amd64"
 
-  version "0.9.6"
-  sha256 arm:   "efd48f56f1cf9f6ab6e369e2879e4bea6497381e306f63c4ba3939ce971be6a1",
-         intel: "9da284bacc326434c3a0574bd4f959dfd8906ef0f768df58db2ca8fd1522234d"
+  version "0.9.7"
+  sha256 arm:   "188e855f6d2ff8e17a83e614e11442a38d55c9ffd03e1ef738cc1a795428eeac",
+         intel: "acf14463c82e94aa500505d7ecf87527553cf4e7fa711a5d0c4f38b75b1eee6e"
 
   url "https://github.com/idy/tailsplit/releases/download/v#{version}/TailSplit_#{version}_darwin_#{arch}.dmg"
   name "TailSplit"
